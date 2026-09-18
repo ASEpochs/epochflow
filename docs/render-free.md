@@ -4,7 +4,7 @@
 
 ## 1. GitHub
 
-在 ASEpochs 下使用独立的 epochflow 私有仓库。不要把真实 .env.local、密钥、数据库、依赖、缓存或原项目的 .git 放入新仓库。模型配置仅复制到新后端被忽略的 .env.local，发布时写入 Render Environment，不随 Git 上传。
+在 ASEpochs 下使用独立的 epochflow 公开仓库（用户已确认公开，方便 Render 拉取）。不要把真实 .env.local、密钥、数据库、依赖、缓存或原项目的 .git 放入新仓库。模型配置仅复制到新后端被忽略的 .env.local，发布时写入 Render Environment，不随 Git 上传。
 
 ## 2. 创建免费后端
 
@@ -46,10 +46,21 @@ Free 不等于无限免费：带宽和构建额度超额的处理与账号付款
 
 ## 自动发布脚本
 
-scripts/publish_github.py 使用 Git Credential Manager 的现有 ASEpochs 授权，拒绝覆盖其他已有仓库。运行前需先完成本地代码审查、暂存与提交。
+scripts/publish_github.py 使用 Git Credential Manager 的现有 ASEpochs 授权，拒绝覆盖其他已有仓库。运行前需先完成本地代码审查、暂存与提交。如果本机 Git HTTPS 连接中断，已初始化仓库可使用 scripts/sync_github_api.py 通过 GitHub 官方 Git 数据 API 同步单次新提交；上传前仍须检查提交内容。
 
 scripts/deploy_render.py 从被忽略的 .env.deploy.local 读取 RENDER_API_KEY，从 backend/.env.local 读取模型配置；只创建独立的 Free 后端和 Static Site。工作台访问码 APP_ACCESS_TOKEN 自动生成后保存在 .env.deploy.local，在线页面的“工作台设置”中填写该访问码即可使用。不要填写模型密钥或 Render 密钥。
 
-服务 ID 与地址保存在 .runtime/render-services.json。代码更新推送到 main 后由 Render 自动构建；环境变量变更后需要重新部署后端。
+服务 ID 与地址保存在 .runtime/render-services.json。服务已设置 autoDeploy=yes；若以公开仓库 URL 连接而未授予 GitHub App 权限，推送后应检查是否触发构建，必要时在 Render 选择 Deploy latest commit。环境变量变更后需要重新部署后端。
+
+## 当前发布
+
+- 前端：https://epochflow-web.onrender.com
+- 后端：https://epochflow-api.onrender.com
+- GitHub：https://github.com/ASEpochs/epochflow
+- 后端服务：epochflow-api，Free，Singapore。
+- 前端服务：epochflow-web，Static Site。
+- 首次使用：在网站“工作台设置”填写本地 .runtime/访问工作台.txt 中的工作台访问码。
+
+已验证在线健康检查、生产访问码保护、CORS、知识检索、手机布局及一次真实模型回复。
 
 官方依据：https://render.com/docs/free 与 https://render.com/docs/blueprint-spec 。

@@ -2,6 +2,10 @@
 
 **一个问题，开启一次 Agent 实验。**
 
+[打开在线工作台](https://epochflow-web.onrender.com) · [后端健康状态](https://epochflow-api.onrender.com/health) · [GitHub 仓库](https://github.com/ASEpochs/epochflow)
+
+线上工作台需要访问码，在“工作台设置”中填写。模型与 Render 密钥仅存在于本地忽略配置和 Render 后端环境变量中。
+
 EpochFlow 是一个中文 Agent 学习工作台：把真实对话、意图识别、Agent 路由、知识检索、工具调用与评测放在同一个界面中，帮助你观察并理解一次请求的执行过程。
 
 ![EpochFlow 对话实验室](docs/assets/workspace-desktop.png)
