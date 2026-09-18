@@ -1,0 +1,138 @@
+services:
+  echomind-python:
+    build:
+      context: ../EchoMind
+      dockerfile: Dockerfile
+      target: production
+    container_name: echomind-python
+    ports:
+      - "8000:8000"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-3-5-sonnet-20241022}
+      LLM_STARTUP_API_KEY: ${LLM_STARTUP_API_KEY:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-echomind123}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-echomind123}@redis:6379/0
+      CHROMA_PERSIST_DIRECTORY: /app/data/chroma
+      EVAL_BASELINE_PATH: /app/data/eval/baseline.json
+      ECHOMIND_SKILLS_DIR: /app/skills
+    volumes:
+      - echomind-python-data:/app/data
+      - ../EchoMind/skills:/app/skills
+    depends_on:
+      redis:
+        condition: service_started
+      chromadb:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - echomind-network
+
+  echomind-java:
+    build:
+      context: ../EchoMindJava
+      dockerfile: Dockerfile
+    container_name: echomind-java
+    ports:
+      - "8080:8080"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-3-5-sonnet-20241022}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-anthropic}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-echomind123}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      ECHOMIND_DATA_DIR: /app/data/java
+      KNOWLEDGE_STORE_PATH: /app/data/java/knowledge-store.json
+      MEMORY_STORE_PATH: /app/data/java/memory-store.json
+      ECHOMIND_SKILLS_DIR: /app/skills
+    volumes:
+      - echomind-java-data:/app/data
+      - ../EchoMindJava/skills:/app/skills
+    depends_on:
+      redis:
+        condition: service_started
+      chromadb:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - echomind-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: echomind-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-echomind123}
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - echomind-network
+
+  chromadb:
+    image: chromadb/chroma:0.5.23
+    container_name: echomind-chromadb
+    ports:
+      - "8001:8000"
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /chroma/chroma
+      ANONYMIZED_TELEMETRY: "FALSE"
+    volumes:
+      - chromadb-data:/chroma/chroma
+    restart: unless-stopped
+    networks:
+      - echomind-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: echomind-frontend
+    environment:
+      PYTHON_API_URL: /api/python
+      JAVA_API_URL: /api/java
+    ports:
+      - "${FRONTEND_PORT:-5174}:80"
+    depends_on:
+      echomind-python:
+        condition: service_started
+      echomind-java:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - echomind-network
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: echomind-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx-gateway.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      frontend:
+        condition: service_started
+      echomind-python:
+        condition: service_started
+      echomind-java:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - echomind-network
+
+networks:
+  echomind-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  chromadb-data:
+  echomind-python-data:
+  echomind-java-data:
