@@ -17,7 +17,10 @@ def create_async_client(api_key: str, base_url: Optional[str] = None, **options:
                 **kwargs.get("default_headers", {}),
                 "Authorization": f"Bearer {api_key}",
             }
-    return AsyncAnthropic(**kwargs)
+    client = AsyncAnthropic(**kwargs)
+    from core.model_scope import ScopedMessages
+    client.messages = ScopedMessages(client)
+    return client
 
 
 def extract_text_content(content: Iterable[Any]) -> str:

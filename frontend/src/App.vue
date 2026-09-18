@@ -7,6 +7,7 @@ import KnowledgeView from './views/KnowledgeView.vue'
 import EvaluationView from './views/EvaluationView.vue'
 import OverviewView from './views/OverviewView.vue'
 import SettingsView from './views/SettingsView.vue'
+import ModelsView from './views/ModelsView.vue'
 const workspace = useWorkspace()
 const { view, conversations, activeId, health, notice, createConversation, selectConversation, refresh, connectionError } = workspace
 const mobileMenu = ref(false)
@@ -15,6 +16,7 @@ const navigation = [
   { id: 'knowledge', label: '知识空间', icon: Library, hint: '02' },
   { id: 'evaluation', label: '评测实验', icon: FlaskConical, hint: '03' },
   { id: 'overview', label: '运行概览', icon: Activity, hint: '04' },
+  { id: 'models', label: '模型中心', icon: Layers3, hint: '05' },
 ]
 const title = computed(() => navigation.find(item => item.id === view.value)?.label || '工作台设置')
 function navigate(id) { view.value = id; mobileMenu.value = false }
@@ -39,9 +41,10 @@ function navigate(id) { view.value = id; mobileMenu.value = false }
         <KnowledgeView v-else-if="view === 'knowledge'" :workspace="workspace" />
         <EvaluationView v-else-if="view === 'evaluation'" :workspace="workspace" />
         <OverviewView v-else-if="view === 'overview'" :workspace="workspace" />
+        <ModelsView v-else-if="view === 'models'" :workspace="workspace" />
         <SettingsView v-else :workspace="workspace" />
       </main>
-      <footer class="app-footer"><span><i class="tiny-dot"></i> EpochFlow · 纪流</span><span>学习演示环境 <span class="footer-dot">·</span> 云端临时数据在休眠或重启后清除</span><span class="footer-version">v1.0 / FREE EDITION</span></footer>
+      <footer class="app-footer"><span><i class="tiny-dot"></i> EpochFlow · 纪流</span><span>学习演示环境 <span class="footer-dot">·</span> 云端临时数据在休眠或重启后清除</span><span class="footer-version">v1.1 / MODEL STUDIO</span></footer>
     </div>
     <div v-if="notice" class="toast" role="status">{{ notice }}<button class="icon-button" aria-label="关闭通知" @click="notice = ''"><X :size="15" /></button></div>
   </div>

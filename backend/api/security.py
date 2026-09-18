@@ -42,7 +42,7 @@ class RequestBoundary:
             supplied = headers.get(b'x-access-token', b'')
             if token and not secrets.compare_digest(supplied, token.encode()):
                 return await reject(401, '访问码无效或未填写，请前往工作台设置填写访问码')
-        is_model = method == 'POST' and path in {'/chat', '/eval/run'}
+        is_model = method == 'POST' and path in {'/chat', '/eval/run', '/models/run', '/models/video/status'}
         if is_model:
             if not model_configured():
                 return await reject(503, '模型未配置，请在后端设置 ANTHROPIC_API_KEY；未调用模型')
@@ -76,6 +76,9 @@ class RequestBoundary:
                     (b'x-content-type-options', b'nosniff'), (b'cache-control', b'no-store')])
             await send(event)
         if is_model:
+            # Body collection awaits network input; recheck admission atomically afterwards.
+            if len(self.model_calls) >= 12 or self.active_models >= 2:
+                return await reject(429, '当前实验较多，请稍后再试（最多同时运行 2 项、每分钟 12 项）')
             self.active_models += 1
             self.model_calls.append(time.monotonic())
         try:

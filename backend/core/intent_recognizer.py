@@ -451,7 +451,8 @@ class IntentRecognizer:
         return UrgencyLevel.LOW
 
     def _cache_key(self, message: str, history: Optional[List[Dict[str, str]]] = None) -> str:
-        payload = {"message": self._clean_text(message)[:200]}
+        from core.model_scope import selected_model
+        payload = {"message": self._clean_text(message)[:200], "model": selected_model.get() or self.model}
         if history:
             payload["history"] = [
                 {

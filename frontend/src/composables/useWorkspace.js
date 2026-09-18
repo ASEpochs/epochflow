@@ -6,6 +6,11 @@ export function useWorkspace() {
   const view = ref('chat'), conversations = ref(restore()), activeId = ref(conversations.value[0]?.id || '')
   const active = computed(() => conversations.value.find(item => item.id === activeId.value))
   const health = ref(null), monitor = ref(null), skills = ref(null), notice = ref(''), busy = ref(false), connectionError = ref('')
+  const catalog = ref(null), selectedModel = ref(sessionStorage.getItem('epochflow.agentModel') || '')
+  watch(selectedModel, value => sessionStorage.setItem('epochflow.agentModel', value))
+  const agentModels = computed(() => (catalog.value?.items || []).filter(item => item.agent))
+  async function loadModels() { catalog.value = await api('/models'); return catalog.value }
+  function useModel(id) { selectedModel.value = id; createConversation(); notify('新会话已选择 ' + id.split('/').at(-1)) }
   let noticeTimer
   const userId = sessionStorage.getItem('epochflow.user') || crypto.randomUUID()
   sessionStorage.setItem('epochflow.user', userId)
@@ -27,7 +32,7 @@ export function useWorkspace() {
     connectionError.value = ''
     try {
       health.value = await api('/health')
-      const results = await Promise.allSettled([api('/monitor'), api('/skills')])
+      const results = await Promise.allSettled([api('/monitor'), api('/skills'), loadModels()])
       if (results[0].status === 'fulfilled') monitor.value = results[0].value
       else connectionError.value = results[0].reason.message
       if (results[1].status === 'fulfilled') skills.value = results[1].value
@@ -42,7 +47,7 @@ export function useWorkspace() {
     const message = conversation.messages[conversation.messages.length - 1]
     busy.value = true
     try {
-      const response = await api('/chat', { method: 'POST', body: { message: text, user_id: userId, conv_id: conversation.serverId || undefined } })
+      const response = await api('/chat', { method: 'POST', body: { message: text, user_id: userId, conv_id: conversation.serverId || undefined, model: selectedModel.value || undefined } })
       conversation.serverId = response.conv_id; message.content = response.response; message.result = response
       try { message.trace = (await api(`/trace/tool/${encodeURIComponent(response.request_id)}`)).trace } catch { message.traceError = true }
       await refresh()
@@ -51,5 +56,5 @@ export function useWorkspace() {
   }
   function exportConversation() { if (active.value) downloadJson(`epochflow-conversation-${active.value.id.slice(0, 8)}.json`, active.value) }
   onMounted(() => { if (!activeId.value) createConversation(); refresh() })
-  return { view, conversations, activeId, active, health, monitor, skills, notice, busy, connectionError, notify, refresh, createConversation, selectConversation, deleteConversation, send, exportConversation }
+  return { view, conversations, activeId, active, health, monitor, skills, notice, busy, connectionError, notify, refresh, createConversation, selectConversation, deleteConversation, send, exportConversation, catalog, loadModels, selectedModel, agentModels, useModel }
 }

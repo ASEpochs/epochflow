@@ -61,3 +61,61 @@ test('mobile workspace has no horizontal overflow and menu works', async ({ page
   await expect(page.getByRole('heading', { name: '知识空间.' })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
+
+test('model catalogue filters, runs embeddings and validates image input', async ({ page }) => {
+  const errors = []; page.on('pageerror', error => errors.push(error.message))
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/')
+  await page.getByRole('button', { name: '模型中心 05' }).click()
+  await expect(page.getByRole('heading', { name: '模型中心.' })).toBeVisible()
+  await expect(page.locator('.model-card')).toHaveCount(9)
+  await expect(page.locator('.model-hero-stats').first()).toContainText('50')
+  await page.screenshot({ path: '../docs/assets/model-studio.png', fullPage: true, animations: 'disabled' })
+  await page.getByLabel('搜索模型').fill('Qwen3-Embedding-0.6B')
+  await expect(page.locator('.model-card')).toHaveCount(1)
+  await page.locator('.model-card').click()
+  await page.route('**/api/python/models/run', async route => {
+    const payload = route.request().postDataJSON()
+    expect(payload.model).toBe('Qwen/Qwen3-Embedding-0.6B')
+    expect(payload.documents).toHaveLength(3)
+    await route.fulfill({ json: { model: payload.model, category: 'embedding', latency_ms: 600,
+      documents: payload.documents, dimensions: [2, 2, 2], vectors: [[1, 0], [1, 0], [0, 1]],
+      similarity: [[1, 1, 0], [1, 1, 0], [0, 0, 1]] } })
+  })
+  await page.getByRole('button', { name: '运行模型实验' }).click()
+  await expect(page.getByRole('table', { name: '余弦相似度' })).toBeVisible()
+  await page.getByLabel('搜索模型').fill('Qwen-Image-Edit-2509')
+  await page.locator('.model-card').click()
+  await expect(page.getByLabel('图片素材 （必填）')).toBeVisible()
+  await page.getByRole('button', { name: '运行模型实验' }).click()
+  expect(await page.getByLabel('图片素材 （必填）').evaluate(el => el.validity.valueMissing)).toBe(true)
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: '../docs/assets/model-studio-mobile.png', fullPage: true, animations: 'disabled' })
+  expect(errors).toEqual([])
+})
+
+test('video task can resume after page reload without submitting again', async ({ page }) => {
+  let submitted = 0, queried = 0
+  await page.route('**/api/python/models/run', route => {
+    submitted++
+    return route.fulfill({ json: { model: 'Wan-AI/Wan2.2-T2V-A14B', category: 'video', requestId: 'test-video-task', latency_ms: 100 } })
+  })
+  await page.route('**/api/python/models/video/status', route => {
+    queried++
+    expect(route.request().postDataJSON().request_id).toBe('test-video-task')
+    return route.fulfill({ json: { status: 'InProgress' } })
+  })
+  await page.goto('/')
+  await page.getByRole('button', { name: '模型中心 05' }).click()
+  await page.getByLabel('搜索模型').fill('Wan2.2-T2V')
+  await page.locator('.model-card').click()
+  await page.getByRole('button', { name: '运行模型实验' }).click()
+  await expect(page.getByText('test-video-task')).toBeVisible()
+  await page.reload()
+  await page.getByRole('button', { name: '模型中心 05' }).click()
+  await expect(page.getByText('正在生成', { exact: true })).toBeVisible()
+  expect(submitted).toBe(1)
+  expect(queried).toBeGreaterThan(0)
+  await expect(page.getByRole('button', { name: '已有视频任务待完成' })).toBeDisabled()
+})

@@ -17,6 +17,7 @@ EpochFlow 是一个中文 Agent 学习工作台：把真实对话、意图识别
 | 页面 | 可以做什么 |
 | --- | --- |
 | 对话实验室 | 新建与切换会话、Markdown 回复、代码块、复制、失败重试、导出记录 |
+| 模型中心 | 50 个硅基流动模型、9 类实验、账号状态核验、媒体预览、向量相似度和检索重排 |
 | 执行观察 | 意图与置信度、Agent 路由、工具输入输出、耗时和 request_id |
 | 知识空间 | 查看资料、上传 TXT/MD/JSON、添加与移除文档、匹配检索、导出资料 |
 | 评测实验 | 自定义单个意图案例或回复质量案例，查看真实评分并导出报告 |
@@ -38,6 +39,8 @@ flowchart LR
   LLM --> Response
   Response --> UI
   API --> Eval[单案例评测]
+  API --> Studio[模型中心 / 请求参数校验]
+  Studio --> SiliconFlow[文字 / 视觉 / 图像 / 视频 / 语音 / 向量 / 重排 API]
 ```
 
 前端按页面和组件拆分，API 客户端集中处理访问码、错误与超时。后端使用独立请求模型、访问边界和知识管理路由，保留原有编排与评测逻辑。
@@ -46,7 +49,7 @@ flowchart LR
 frontend/src/
   components/      Markdown 回复与执行详情
   composables/     会话状态与运行状态
-  views/           对话、知识、评测、概览、设置
+  views/           对话、模型中心、知识、评测、概览、设置
   lib/api.js       统一请求和导出
 backend/
   api/             HTTP 入口、请求模型、访问边界、工作台接口
@@ -80,7 +83,22 @@ python 启动开发.py
 
 访问 http://127.0.0.1:5174 ，后端使用 8003。终端内 Ctrl+C 会停止本次启动的两个服务。脚本不操作其他项目或 Docker。若本机 Node PATH 指向旧版本，可设置 NODE_BINARY 为新版 node.exe 的完整路径。
 
-模型 API 使用 Anthropic Messages 兼容协议，硅基流动适配沿用原项目。模型密钥只由后端读取，不向浏览器发送。无密钥时仍可启动、检索和查看状态，对话与评测明确提示未配置。
+默认 Agent 沿用 Anthropic Messages 兼容协议；切换 Agent 模型时，通过请求独立的 OpenAI 工具调用适配器执行。模型中心分别使用硅基流动的文字、多模态、生成和检索接口。模型密钥只由后端读取，不向浏览器发送。无密钥时仍可启动、检索和查看状态。
+
+## 模型实验
+
+![EpochFlow 模型中心](docs/assets/model-studio.png)
+
+50 个模型按 9 类组织：21 个文字与推理、7 个视觉理解、3 个多模态理解、3 个图像创作、2 个视频生成、2 个语音合成、4 个向量、4 个重排、4 个 LoRA 系列入口。完整 ID 见 `backend/core/model_catalog.py`。
+
+- **选择与核验**：搜索或按能力筛选。通过账号 `/v1/models` 检查模型是否列出，缓存 5 分钟；不自动发起付费生成。列出状态不代表已验证所有调用权限或代金券抵扣。
+- **Agent 对话**：DeepSeek-V3.2、V3.1-Terminus、Qwen3-Coder-30B-A3B-Instruct、Qwen3-30B-A3B-Instruct-2507 可选；每次请求独立选择并返回模型 ID。其他文字模型可在模型中心做单次实验。
+- **多模态与创作**：支持 HTTPS 素材或 ≤700KB 文件、看图/音频/视频理解、文生图、图片编辑、语音合成；预览和保存结果。较大的素材使用平台可访问的公开链接。
+- **视频任务**：生成与状态查询分离，任务编号保存在当前浏览器会话中；刷新后可以恢复查询，避免重复生成。云端结果链接会过期，请及时保存。
+- **知识实验**：观察真实 embedding 向量及余弦相似度，比较 reranker 排序。不会替换知识空间的免费字符匹配方式。
+- **LoRA**：这四项是微调系列入口，推理需要硅基流动训练完成后提供的实际模型 ID；本项目不自动创建训练任务。
+
+详见 [模型接入说明与官方接口依据](docs/model-studio.md)。Render 仍为免费部署、不使用持久磁盘；模型 API 可能消耗代金券或账户余额。
 
 ## 免费部署
 
@@ -101,7 +119,7 @@ Render 配置只有一个 Free Python 后端和免费 Static Site，没有磁盘
 ```powershell
 cd backend
 .\.venv\Scripts\python.exe -m pip install pytest==8.3.4
-.\.venv\Scripts\python.exe -m pytest -q tests/test_free_profile.py tests/test_agent_orchestrator.py tests/test_llm_utils.py
+.\.venv\Scripts\python.exe -m pytest -q tests/test_free_profile.py tests/test_agent_orchestrator.py tests/test_llm_utils.py tests/test_model_studio.py
 cd ../frontend
 npm run build
 npm run test:e2e

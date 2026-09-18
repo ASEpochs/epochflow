@@ -22,6 +22,8 @@ services:
         sync: false
       - key: ANTHROPIC_MODEL
         value: deepseek-ai/DeepSeek-V3.2
+      - key: ANTHROPIC_API_KEY
+        sync: false
       - key: ANTHROPIC_BASE_URL
         value: https://api.siliconflow.cn
   - type: web

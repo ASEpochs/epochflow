@@ -47,6 +47,8 @@ _skill_manager = None
 
 from api.security import RequestBoundary, model_configured
 from api.workspace import router as workspace_router
+from api.models import router as models_router
+from core.model_scope import agent_model_scope, model_errors
 
 
 def _anthropic_cfg() -> Dict[str, Any]:
@@ -210,6 +212,7 @@ app = FastAPI(
 
 app.add_middleware(RequestBoundary)
 app.include_router(workspace_router)
+app.include_router(models_router)
 
 
 @app.exception_handler(ValueError)
@@ -260,6 +263,11 @@ async def reload_skills():
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
+    async with agent_model_scope(req):
+        return await _chat_with_model(req)
+
+
+async def _chat_with_model(req: ChatRequest):
     """
     主对话接口。完整流程：
       记忆读取 → 意图识别 → Agent 路由 → 执行 → 记忆写入
@@ -299,6 +307,8 @@ async def chat(req: ChatRequest):
 
     # 3. 执行
     result = await _orchestrator.run(orch_req)
+    if model_errors.get():
+        raise model_errors.get()[0]
 
     # 4. 写入记忆
     await _memory.add_message(req.user_id, conv_id, MsgRole.USER, req.message)
@@ -309,6 +319,7 @@ async def chat(req: ChatRequest):
         await _memory.update_profile(req.user_id, conv_id)
 
     return ChatResponse(
+        model=req.model or os.getenv("ANTHROPIC_MODEL", ""),
         conv_id=conv_id,
         request_id=result.request_id,
         response=result.response,
