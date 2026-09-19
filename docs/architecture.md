@@ -2,7 +2,7 @@
 
 ## 前端
 
-App.vue 负责导航和工作台框架。各页面保持单一职责，useWorkspace 管理浏览器会话及请求状态。lib/api.js 集中管理生产 API 地址、访问码、响应检查和 180 秒超时。Markdown 通过 DOMPurify 净化后显示。
+App.vue 负责导航和工作台框架。各页面保持单一职责，useWorkspace 管理浏览器会话及请求状态。lib/api.js 集中管理生产 API 地址、可选访问码、响应检查和 180 秒超时。Markdown 通过 DOMPurify 净化后显示。
 
 失败重试只重发对应问题，不伪造成功。执行详情来自 /chat 返回的结构化结果及 /trace/tool/{request_id}，没有逐 token 流式效果或内部推理展示。
 
@@ -10,7 +10,7 @@ App.vue 负责导航和工作台框架。各页面保持单一职责，useWorksp
 
 api/security.py 在进入路由前完成生产访问校验、请求体限额、模型请求频率和并发控制。CORS 包裹该边界，跨域的错误状态也能被前端读取。请求带 X-Request-ID，响应禁止缓存。
 
-api/schemas.py 维护请求和响应模型。api/workspace.py 管理知识文档列表与删除；知识变更清除检索缓存，避免删除后的内容仍被命中。api/main.py 负责资源初始化及原业务链路。
+api/schemas.py 维护请求和响应模型。api/workspace.py 管理知识文档列表与删除；知识变更清除检索缓存，避免删除后的内容仍被命中。api/main.py 负责资源初始化与 Agent 主链路。
 
 STORAGE_MODE=memory 使用 free_memory 与 free_knowledge，数据均为进程内存。生产只运行单个 worker，不启用多个进程间不一致的内存数据库。模型客户端在应用退出时关闭。
 

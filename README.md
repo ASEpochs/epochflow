@@ -1,130 +1,254 @@
+<div align="center">
+
 # EpochFlow · 纪流
 
-**一个问题，开启一次 Agent 实验。**
+### 可观测、可评测、可部署的多 Agent 运行与模型实验平台
 
-[打开在线工作台](https://epochflow-web.onrender.com) · [后端健康状态](https://epochflow-api.onrender.com/health) · [GitHub 仓库](https://github.com/ASEpochs/epochflow)
+<p>
+  <a href="https://epochflow-web.onrender.com/"><strong>🚀 点击这里，立即体验在线系统 →</strong></a>
+</p>
 
-线上工作台已开启公开演示，打开即可体验，无需访问码。模型与 Render 密钥只存在于本地忽略配置和 Render 后端环境变量中，不会发送到浏览器。
+<p>无需注册 · 无需访问码 · 浏览器直接使用</p>
 
-EpochFlow 是一个中文 Agent 学习工作台：把真实对话、意图识别、Agent 路由、知识检索、工具调用与评测放在同一个界面中，帮助你观察并理解一次请求的执行过程。
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Online-2f765b?style=for-the-badge)](https://epochflow-web.onrender.com/)
+[![CI](https://github.com/ASEpochs/epochflow/actions/workflows/check.yml/badge.svg)](https://github.com/ASEpochs/epochflow/actions/workflows/check.yml)
+[![Python](https://img.shields.io/badge/Python-3.12-456b8b?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Vue](https://img.shields.io/badge/Vue-3-3f8f6b?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+[![Render](https://img.shields.io/badge/Render-Deployed-6b5fd3?style=flat-square&logo=render&logoColor=white)](https://render.com/)
+
+</div>
+
+> **给面试官 / 导师的快速体验建议：** 打开[在线工作台](https://epochflow-web.onrender.com/)，在“对话实验室”输入“登录失败，而且订单需要退款”，观察意图识别、主辅 Agent 路由和工具执行；随后进入“模型中心”或“知识空间”体验多模型与检索能力。Render 免费实例首次唤醒可能需要约一分钟。
+
+## 项目简介
+
+EpochFlow 是我设计并实现的个人 Agent 工程项目。它面向客服与知识服务场景，将一次模型请求拆成可观察的工程链路：**意图识别 → Agent 路由 → Skills 注入 → 工具调用 → 知识检索 → 回复合成 → 运行评测**。
+
+我希望解决的问题不是“让大模型多回答一句话”，而是让 Agent 系统具备清晰的角色边界、可追踪的执行过程、可替换的模型能力和可重复的质量验证。项目包含 Vue 工作台、FastAPI 后端、多 Agent 编排器、轻量知识库、模型网关、评测模块、自动化测试与 Render 云端部署。
 
 ![EpochFlow 对话实验室](docs/assets/workspace-desktop.png)
 
-基于现有 EchoMind 项目独立改造，保留原始项目不变。当前用客服场景作为教学载体，业务工具中的订单与退款数据是教学示例，不连接真实商家系统。模型回答和执行记录来自实际运行。
+## 一眼看懂项目
 
-## 工作空间
-
-| 页面 | 可以做什么 |
+| 维度 | 当前实现 |
 | --- | --- |
-| 对话实验室 | 新建与切换会话、Markdown 回复、代码块、复制、失败重试、导出记录 |
-| 模型中心 | 50 个硅基流动模型、9 类实验、账号状态核验、媒体预览、向量相似度和检索重排 |
-| 执行观察 | 意图与置信度、Agent 路由、工具输入输出、耗时和 request_id |
-| 知识空间 | 查看资料、上传 TXT/MD/JSON、添加与移除文档、匹配检索、导出资料 |
-| 评测实验 | 自定义单个意图案例或回复质量案例，查看真实评分并导出报告 |
-| 运行概览 | 当前 Agent 调用统计、已加载 Skills 和请求流程 |
-| 工作台设置 | 公开演示状态、模型配置摘要、后端状态与数据限制 |
+| Agent | 通用、技术、账单、人工升级 4 类角色，支持主辅 Agent 协作 |
+| 模型 | 接入硅基流动 50 个模型标识，覆盖 9 类任务 |
+| 工具 | Agent 工具白名单、参数校验、执行记录、缓存与降级 |
+| 知识 | 文档导入、切片、检索、结果回注与浏览器导出 |
+| Skills | 3 个可热加载业务 Skill，按角色与关键词动态注入 |
+| 可观测性 | request_id、意图置信度、路由原因、工具输入输出与延迟 |
+| 评测 | 意图案例、对话质量、LLM-as-Judge 与报告导出 |
+| 工程验证 | 38 项后端测试、6 项浏览器端到端测试、GitHub Actions |
+| 部署 | Vue Static Site + Python Free Web Service，无持久磁盘 |
 
-## 架构
+## 核心能力
 
-```mermaid
-flowchart LR
-  UI[Vue 学习工作台] --> API[FastAPI 访问边界]
-  API --> Memory[临时会话记忆]
-  Memory --> Intent[意图识别]
-  Intent --> Router[Agent 路由]
-  Router --> Agents[通用 / 技术 / 账单 / 交接]
-  Agents --> Tools[工具与知识检索]
-  Agents --> LLM[后端模型 API]
-  Tools --> Response[回复与执行记录]
-  LLM --> Response
-  Response --> UI
-  API --> Eval[单案例评测]
-  API --> Studio[模型中心 / 请求参数校验]
-  Studio --> SiliconFlow[文字 / 视觉 / 图像 / 视频 / 语音 / 向量 / 重排 API]
-```
+### 1. 路由驱动的多 Agent 协作
 
-前端按页面和组件拆分，API 客户端集中处理错误与超时，并兼容私有部署的访问码。后端使用独立请求模型、访问边界和知识管理路由，保留原有编排与评测逻辑。
+- 先识别细粒度意图与结构化实体，再决定由哪个 Agent 处理。
+- 复杂请求可以选择一个主 Agent 和多个辅助 Agent，而非简单切换 prompt。
+- 每个角色拥有独立的 system prompt、输出契约、模型参数和工具白名单。
+- 执行结果返回路由原因、置信度、参与角色和工具调用明细。
 
-```text
-frontend/src/
-  components/      Markdown 回复与执行详情
-  composables/     会话状态与运行状态
-  views/           对话、模型中心、知识、评测、概览、设置
-  lib/api.js       统一请求和导出
-backend/
-  api/             HTTP 入口、请求模型、访问边界、工作台接口
-  agents/          Agent 编排与教学业务工具
-  core/            意图识别、LLM 客户端、Skills 加载
-  memory/          免费内存记忆与原完整存储实现
-  mcp/             工具管理与知识检索
-  evaluation/      意图和回复质量评测
-  tests/           行为回归测试
-```
+### 2. 多协议模型网关与模型中心
 
-## 本地运行
-
-使用 Python 3.12 和 Node 22.16+。首次安装：
-
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements-free.txt
-Copy-Item .env.example .env.local
-cd ../frontend
-npm ci
-cd ..
-```
-
-在 backend/.env.local 配置供应商匹配的 ANTHROPIC_API_KEY、ANTHROPIC_BASE_URL 和 ANTHROPIC_MODEL，随后在项目根目录执行：
-
-```powershell
-python 启动开发.py
-```
-
-访问 http://127.0.0.1:5174 ，后端使用 8003。终端内 Ctrl+C 会停止本次启动的两个服务。脚本不操作其他项目或 Docker。若本机 Node PATH 指向旧版本，可设置 NODE_BINARY 为新版 node.exe 的完整路径。
-
-默认 Agent 沿用 Anthropic Messages 兼容协议；切换 Agent 模型时，通过请求独立的 OpenAI 工具调用适配器执行。模型中心分别使用硅基流动的文字、多模态、生成和检索接口。模型密钥只由后端读取，不向浏览器发送。无密钥时仍可启动、检索和查看状态。
-
-## 模型实验
+- 同时适配 Anthropic Messages 和 OpenAI Chat Completions 风格接口。
+- 使用请求级上下文隔离模型选择，避免并发会话相互覆盖配置。
+- 根据任务分别调用文字、视觉、图像、视频、语音、Embedding 与 Rerank API。
+- 提供 50 个模型、9 类实验入口，并实时核验当前账号的模型清单。
+- 视频任务采用提交与状态轮询分离，刷新页面后仍可恢复任务查询。
 
 ![EpochFlow 模型中心](docs/assets/model-studio.png)
 
-50 个模型按 9 类组织：21 个文字与推理、7 个视觉理解、3 个多模态理解、3 个图像创作、2 个视频生成、2 个语音合成、4 个向量、4 个重排、4 个 LoRA 系列入口。完整 ID 见 `backend/core/model_catalog.py`。
+### 3. 可观察的 Agent 执行过程
 
-- **选择与核验**：搜索或按能力筛选。通过账号 `/v1/models` 检查模型是否列出，缓存 5 分钟；不自动发起付费生成。列出状态不代表已验证所有调用权限或代金券抵扣。
-- **Agent 对话**：DeepSeek-V3.2、V3.1-Terminus、Qwen3-Coder-30B-A3B-Instruct、Qwen3-30B-A3B-Instruct-2507 可选；每次请求独立选择并返回模型 ID。其他文字模型可在模型中心做单次实验。
-- **多模态与创作**：支持 HTTPS 素材或 ≤700KB 文件、看图/音频/视频理解、文生图、图片编辑、语音合成；预览和保存结果。较大的素材使用平台可访问的公开链接。
-- **视频任务**：生成与状态查询分离，任务编号保存在当前浏览器会话中；刷新后可以恢复查询，避免重复生成。云端结果链接会过期，请及时保存。
-- **知识实验**：观察真实 embedding 向量及余弦相似度，比较 reranker 排序。不会替换知识空间的免费字符匹配方式。
-- **LoRA**：这四项是微调系列入口，推理需要硅基流动训练完成后提供的实际模型 ID；本项目不自动创建训练任务。
+工作台不会只显示最终回答。每次请求都可以检查：
 
-详见 [模型接入说明与官方接口依据](docs/model-studio.md)。Render 仍为免费部署、不使用持久磁盘；模型 API 可能消耗代金券或账户余额。
+- 意图分类、置信度与实体提取结果；
+- 主 Agent、辅助 Agent 与路由理由；
+- 工具名称、输入、输出、耗时和成功状态；
+- 知识检索是否参与回答；
+- 请求标识与端到端延迟。
 
-## 免费部署
+### 4. 知识增强与动态 Skills
 
-[Render 配置说明](docs/render-free.md) · [架构与运行限制](docs/architecture.md)
+- 支持 TXT、Markdown、JSON 文档导入与分片。
+- 免费云端版本采用进程内字符 n-gram 检索，避免引入付费数据库。
+- 知识变更会主动清理检索缓存，防止删除内容继续被命中。
+- Skills 以文件形式维护业务规则，可在运行时重新加载。
+- 模型中心额外提供真实 Embedding 相似度和 Reranker 排序实验。
 
-Render 配置只有一个 Free Python 后端和免费 Static Site，没有磁盘和数据库。免费模式不安装 Redis、Chroma 或本地向量模型。
+### 5. 评测与可靠性边界
 
-- 云端会话、上传知识、评测历史及运行统计在休眠、重启或重新部署后清除。
-- 浏览器会话记录保存在 sessionStorage，可手动导出；界面显示的历史不代表云端仍保留同样的上下文。
-- 记忆最多 100 个会话，每会话 20 条消息，闲置一小时过期。
-- 知识检索使用字符 n-gram 匹配，不是向量语义检索；预置文档重启时恢复。
-- 上传限 1MB，知识库限 1000 个片段；评测限 5 案例/次，界面默认单案例。
-- 线上作品集开启公开演示，无需访问码；模型接口仍最多并行 2 项、每分钟 12 项。公开访客共享临时知识空间，工作台不提供多租户账户隔离。
-- Free 是 Render 实例计划，模型 API 由供应商另行计费。同一 Render workspace 的免费后端共享每月额度。
+- 支持自定义意图用例和多轮对话质量用例。
+- 使用 LLM-as-Judge 对回答质量进行结构化评分并生成建议。
+- 模型失败、超时或返回异常时显式报错，不伪造成功结果。
+- 后端统一限制请求体、响应体、频率与并发，并为响应附加 request_id。
+- Markdown 输出经过 DOMPurify 清理，供应商密钥始终保留在服务端。
 
-## 验证
+## 系统架构
+
+```mermaid
+flowchart LR
+  User[用户 / 浏览器] --> UI[Vue 3 工作台]
+  UI --> Boundary[FastAPI 请求边界]
+
+  Boundary --> Chat[Agent 对话链路]
+  Chat --> Memory[会话记忆]
+  Memory --> Intent[混合意图识别]
+  Intent --> Router[主辅 Agent 路由]
+  Router --> Agents[通用 / 技术 / 账单 / 升级]
+  Agents --> Skills[动态 Skills]
+  Agents --> Tools[工具与知识检索]
+  Agents --> Composer[回复合成]
+
+  Boundary --> Studio[模型实验中心]
+  Studio --> Gateway[多协议模型网关]
+  Gateway --> SiliconFlow[SiliconFlow APIs]
+
+  Composer --> Trace[执行记录与监控]
+  Tools --> Trace
+  Trace --> UI
+  Boundary --> Eval[意图 / 对话质量评测]
+```
+
+一次 Agent 对话的主链路：
+
+```text
+请求校验
+  → 读取会话上下文
+  → 意图识别与实体提取
+  → 主辅 Agent 路由
+  → Skills 与知识上下文注入
+  → 工具调用循环
+  → 回复合成
+  → 写入临时记忆与执行记录
+```
+
+详细设计见[架构与运行约定](docs/architecture.md)和[面试展示说明](docs/portfolio-guide.md)。
+
+## 技术栈
+
+| 层次 | 技术 |
+| --- | --- |
+| 前端 | Vue 3、Vite、Lucide Icons、Marked、DOMPurify |
+| 后端 | Python 3.12、FastAPI、Pydantic、HTTPX、Anthropic SDK |
+| Agent | 意图识别、结构化路由、主辅 Agent、Skills、工具调用循环 |
+| AI 能力 | SiliconFlow、DeepSeek、Qwen、GLM、Embedding、Rerank、多模态生成 |
+| 数据 | 进程内会话记忆、字符 n-gram 知识检索、sessionStorage |
+| 测试 | Pytest、FastAPI TestClient、Playwright |
+| 工程化 | GitHub Actions、Render、环境变量、CORS、限流与健康检查 |
+
+## 在线体验路线
+
+### 路线 A：观察 Agent 如何协作
+
+1. 打开[在线工作台](https://epochflow-web.onrender.com/)。
+2. 在“对话实验室”输入包含两个诉求的问题，例如：`我的账号无法登录，而且刚才被重复扣款了。`
+3. 查看右侧执行面板中的意图、主辅 Agent、路由理由和工具记录。
+
+### 路线 B：体验多模型能力
+
+1. 进入“模型中心”。
+2. 按文字、视觉、图像、视频、语音、向量或重排筛选模型。
+3. 选择模型运行单次实验，查看真实结果、耗时和 token 使用量。
+
+### 路线 C：验证知识增强
+
+1. 在“知识空间”添加一篇自定义文档。
+2. 使用检索实验检查命中结果。
+3. 回到对话实验室提问，并在执行记录中检查知识工具是否参与。
+
+## 关键代码导航
+
+| 模块 | 入口 |
+| --- | --- |
+| FastAPI 应用与 Agent 主链路 | [`backend/api/main.py`](backend/api/main.py) |
+| 多 Agent 编排与工具循环 | [`backend/agents/agent_orchestrator.py`](backend/agents/agent_orchestrator.py) |
+| 意图识别与缓存 | [`backend/core/intent_recognizer.py`](backend/core/intent_recognizer.py) |
+| 请求级模型隔离与协议转换 | [`backend/core/model_scope.py`](backend/core/model_scope.py) |
+| 多模态模型 API | [`backend/api/models.py`](backend/api/models.py) |
+| 50 个模型目录 | [`backend/core/model_catalog.py`](backend/core/model_catalog.py) |
+| 生产访问边界 | [`backend/api/security.py`](backend/api/security.py) |
+| 免费知识检索 | [`backend/mcp/free_knowledge.py`](backend/mcp/free_knowledge.py) |
+| 模型中心界面 | [`frontend/src/views/ModelsView.vue`](frontend/src/views/ModelsView.vue) |
+| 前端会话状态 | [`frontend/src/composables/useWorkspace.js`](frontend/src/composables/useWorkspace.js) |
+
+## 本地运行
+
+环境要求：Python 3.12、Node.js 22.16+。
+
+```powershell
+git clone https://github.com/ASEpochs/epochflow.git
+cd epochflow/backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-free.txt
+Copy-Item .env.example .env.local
+
+cd ../frontend
+npm ci
+cd ..
+python 启动开发.py
+```
+
+在 `backend/.env.local` 中填写模型服务配置：
+
+```dotenv
+ANTHROPIC_API_KEY=your_api_key
+ANTHROPIC_BASE_URL=https://api.siliconflow.cn
+ANTHROPIC_MODEL=deepseek-ai/DeepSeek-V3.2
+```
+
+随后访问 `http://127.0.0.1:5174`。开发后端使用 `8003` 端口；终端内按 `Ctrl+C` 会停止本次启动的前后端进程。
+
+## 测试
 
 ```powershell
 cd backend
-.\.venv\Scripts\python.exe -m pip install pytest==8.3.4
-.\.venv\Scripts\python.exe -m pytest -q tests/test_free_profile.py tests/test_agent_orchestrator.py tests/test_llm_utils.py tests/test_model_studio.py
+.\.venv\Scripts\python.exe -m pytest -q `
+  tests/test_free_profile.py `
+  tests/test_agent_orchestrator.py `
+  tests/test_llm_utils.py `
+  tests/test_model_studio.py
+
 cd ../frontend
 npm run build
 npm run test:e2e
 ```
 
-端到端检查需要启动 5174 / 8003 预览以及可用 Chromium。CI 验证 Python 3.12 后端和前端生产构建。原数据库实现的测试需要完整依赖；历史运维文件收在 docs/legacy 中，仅供参考。
+当前验证范围包括：模型接口参数、Agent 工具调用、多模型并发隔离、访问边界、知识生命周期、向量顺序、重排结果、XSS 清理、移动端布局和视频任务恢复。CI 状态可在 [GitHub Actions](https://github.com/ASEpochs/epochflow/actions) 查看。
 
-本项目根据既有 EchoMind 代码与学习资料改造，不将原有实现宣称为从零原创。原学习说明保留在 backend/wiki。
+## 部署方式
+
+线上版本使用：
+
+- **前端：** Render Static Site；
+- **后端：** Render Free Python Web Service；
+- **模型：** SiliconFlow 远程 API；
+- **存储：** 临时内存，不挂载持久磁盘；
+- **发布：** GitHub `main` 分支 + 自动构建。
+
+配置文件见 [`render.yaml`](render.yaml)，详细步骤见[Render 免费部署说明](docs/render-free.md)。
+
+## 在线版本边界
+
+- Render 免费后端休眠后，首次访问可能需要约一分钟唤醒。
+- 会话记忆、上传知识和运行统计会在服务重启或重新部署后清除。
+- 公开访客共享临时知识空间，请勿上传隐私或敏感资料。
+- 模型接口最多并行 2 项、每分钟 12 项，防止公开演示无限消耗额度。
+- 图像与视频结果由模型平台临时托管，重要结果请及时保存。
+- 页面中的订单、退款等业务工具用于 Agent 工程演示，不连接真实商家系统。
+
+## 文档
+
+- [面试展示与项目讲解](docs/portfolio-guide.md)
+- [架构与运行约定](docs/architecture.md)
+- [模型接入说明](docs/model-studio.md)
+- [Render 免费部署](docs/render-free.md)
+
+## 作者
+
+**ASEpochs** · [GitHub](https://github.com/ASEpochs)
+
+如果这个项目对你理解 Agent 工程有所帮助，欢迎 Star 或提出 Issue。

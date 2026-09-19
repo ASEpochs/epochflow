@@ -1,10 +1,10 @@
 # GitHub 上传与 Render 免费部署
 
-仅使用此 Epochflow 目录，不能上传同级 EchoMind、数字教师、压缩包或本机配置。
+部署仅使用 EpochFlow 仓库，不上传压缩包、本机配置、密钥、数据库或依赖缓存。
 
 ## 1. GitHub
 
-在 ASEpochs 下使用独立的 epochflow 公开仓库（用户已确认公开，方便 Render 拉取）。不要把真实 .env.local、密钥、数据库、依赖、缓存或原项目的 .git 放入新仓库。模型配置仅复制到新后端被忽略的 .env.local，发布时写入 Render Environment，不随 Git 上传。
+项目发布到 ASEpochs/epochflow 公开仓库，便于作品展示和 Render 拉取。不要提交真实 `.env.local`、密钥、数据库、依赖或缓存。模型配置只保存在被 Git 忽略的本地文件和 Render Environment 中。
 
 ## 2. 创建免费后端
 
@@ -22,7 +22,7 @@
 
 作品集部署设置 `PUBLIC_DEMO=true`，无需 APP_ACCESS_TOKEN；私有部署时设置 `PUBLIC_DEMO=false` 并为 APP_ACCESS_TOKEN 配置足够长的随机访问码。设置 FRONTEND_ORIGINS 为前端最终的 HTTPS Origin，无结尾斜杠。
 
-真实模型密钥 ANTHROPIC_API_KEY 在后端 Environment 中添加；不填也能启动，但不能真实对话和评测。ANTHROPIC_BASE_URL 和 ANTHROPIC_MODEL 必须与密钥供应商匹配，默认沿用原项目的硅基流动兼容协议设置，不保证供应商一直支持此模型。
+真实模型密钥 ANTHROPIC_API_KEY 在后端 Environment 中添加；不填也能启动，但不能真实对话和评测。ANTHROPIC_BASE_URL 和 ANTHROPIC_MODEL 必须与密钥供应商匹配，默认配置使用硅基流动兼容协议，不保证供应商一直支持某个模型。
 
 ## 3. 创建免费前端
 

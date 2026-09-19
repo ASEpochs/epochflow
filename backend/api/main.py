@@ -35,7 +35,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BANNER = "EpochFlow v1.0 — Agent Learning Studio"
+BANNER = "EpochFlow v1.1 — Agent Engineering Studio"
 
 # ── 全局组件（lifespan 中初始化）─────────────────────────────────────────────
 _orchestrator = None
@@ -204,8 +204,8 @@ async def lifespan(app: FastAPI):
 
 # ── FastAPI ───────────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="EpochFlow Agent 学习工作台",
-    version="1.0.0",
+    title="EpochFlow 多 Agent 工程平台",
+    version="1.1.0",
     lifespan=lifespan,
     docs_url="/docs",
 )
@@ -596,4 +596,3 @@ async def run_eval(body: Optional[EvalRunInput] = None):
             for r in report.results
         ],
     }
-
