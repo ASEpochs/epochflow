@@ -25,18 +25,18 @@
   ·
   <a href="docs/architecture.md">Agent 架构</a>
   ·
-  <a href="docs/portfolio-guide.md">面试讲解</a>
+  <a href="docs/project-guide.md">项目导览</a>
 </p>
 
 </div>
 
-> **给面试官 / 导师的快速体验建议：** 打开[在线工作台](https://epochflow-web.onrender.com/)，在“对话实验室”输入“登录失败，而且订单需要退款”，观察意图识别、主辅 Agent 路由和工具执行；随后进入“模型中心”或“知识空间”体验多模型与检索能力。Render 免费实例首次唤醒可能需要约一分钟。
+> **快速开始：** 打开[在线工作台](https://epochflow-web.onrender.com/)，在“对话实验室”输入“登录失败，而且订单需要退款”，观察意图识别、主辅 Agent 路由和工具执行；随后进入“模型中心”或“知识空间”体验多模型与检索能力。Render 免费实例首次唤醒可能需要约一分钟。
 
 ## 项目简介
 
-EpochFlow 是我设计并实现的个人 Agent 工程项目。它面向客服与知识服务场景，将一次模型请求拆成可观察的工程链路：**意图识别 → Agent 路由 → Skills 注入 → 工具调用 → 知识检索 → 回复合成 → 运行评测**。
+EpochFlow 是一个面向客服与知识服务场景的 Agent 工程项目，将一次模型请求拆成可观察的工程链路：**意图识别 → Agent 路由 → Skills 注入 → 工具调用 → 知识检索 → 回复合成 → 运行评测**。
 
-我希望解决的问题不是“让大模型多回答一句话”，而是让 Agent 系统具备清晰的角色边界、可追踪的执行过程、可替换的模型能力和可重复的质量验证。项目包含 Vue 工作台、FastAPI 后端、多 Agent 编排器、轻量知识库、模型网关、评测模块、自动化测试与 Render 云端部署。
+项目关注的不只是“让大模型多回答一句话”，而是让 Agent 系统具备清晰的角色边界、可追踪的执行过程、可替换的模型能力和可重复的质量验证。系统包含 Vue 工作台、FastAPI 后端、多 Agent 编排器、轻量知识库、模型网关、评测模块、自动化测试与 Render 云端部署。
 
 ![EpochFlow 对话实验室](docs/assets/workspace-desktop.png)
 
@@ -164,7 +164,7 @@ flowchart LR
   → 写入临时记忆与执行记录
 ```
 
-详细设计见[架构与运行约定](docs/architecture.md)和[面试展示说明](docs/portfolio-guide.md)。
+详细设计见[架构与运行约定](docs/architecture.md)和[项目导览与设计说明](docs/project-guide.md)。
 
 ## 技术栈
 
@@ -282,7 +282,7 @@ npm run test:e2e
 
 - [English README](README_EN.md)
 - [文档中心](docs/README.md)
-- [面试展示与项目讲解](docs/portfolio-guide.md)
+- [项目导览与设计说明](docs/project-guide.md)
 - [架构与运行约定](docs/architecture.md)
 - [模型接入说明](docs/model-studio.md)
 - [Render 免费部署](docs/render-free.md)

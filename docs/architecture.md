@@ -22,4 +22,4 @@ STORAGE_MODE=memory 使用 free_memory 与 free_knowledge，数据均为进程�
 
 知识列表按标题聚合片段，导出 JSON 可再次导入。预置文档删除只影响当前运行，重启会恢复。运行统计包含评测触发的 Agent 调用；不等同于浏览器消息数量。
 
-线上作品集通过 `PUBLIC_DEMO=true` 开放访问。所有访客共享同一个临时知识空间及全局模型限流，所以不作为隔离多个陌生用户的数据系统。私有部署可关闭 `PUBLIC_DEMO` 并使用 `APP_ACCESS_TOKEN` 恢复访问码保护。
+公开在线版本通过 `PUBLIC_DEMO=true` 开放访问。所有访客共享同一个临时知识空间及全局模型限流，所以不作为隔离多个陌生用户的数据系统。私有部署可关闭 `PUBLIC_DEMO` 并使用 `APP_ACCESS_TOKEN` 恢复访问码保护。

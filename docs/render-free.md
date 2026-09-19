@@ -20,7 +20,7 @@
 
 环境变量：APP_ENV=production、STORAGE_MODE=memory、PUBLIC_DEMO=true、PROMETHEUS_PORT=0。免费模式的评测历史保存在内存，不写入基线文件。
 
-作品集部署设置 `PUBLIC_DEMO=true`，无需 APP_ACCESS_TOKEN；私有部署时设置 `PUBLIC_DEMO=false` 并为 APP_ACCESS_TOKEN 配置足够长的随机访问码。设置 FRONTEND_ORIGINS 为前端最终的 HTTPS Origin，无结尾斜杠。
+公开演示部署设置 `PUBLIC_DEMO=true`，无需 APP_ACCESS_TOKEN；私有部署时设置 `PUBLIC_DEMO=false` 并为 APP_ACCESS_TOKEN 配置足够长的随机访问码。设置 FRONTEND_ORIGINS 为前端最终的 HTTPS Origin，无结尾斜杠。
 
 真实模型密钥 ANTHROPIC_API_KEY 在后端 Environment 中添加；不填也能启动，但不能真实对话和评测。ANTHROPIC_BASE_URL 和 ANTHROPIC_MODEL 必须与密钥供应商匹配，默认配置使用硅基流动兼容协议，不保证供应商一直支持某个模型。
 
@@ -42,13 +42,13 @@ Render Free 后端空闲 15 分钟会休眠，唤醒通常需要约一分钟。�
 
 Free 不等于无限免费：带宽和构建额度超额的处理与账号付款方式有关。不要自动升级套餐或添加付费磁盘，部署前查看 Dashboard 的用量与消费限制。模型调用由供应商单独计费。
 
-公开演示用于作品集体验，仍没有完整的多用户隔离和计费系统。访客共享临时知识空间，模型请求使用全局频率与并发限制。
+公开演示仍没有完整的多用户隔离和计费系统。访客共享临时知识空间，模型请求使用全局频率与并发限制。
 
 ## 自动发布脚本
 
 scripts/publish_github.py 使用 Git Credential Manager 的现有 ASEpochs 授权，拒绝覆盖其他已有仓库。运行前需先完成本地代码审查、暂存与提交。如果本机 Git HTTPS 连接中断，已初始化仓库可使用 scripts/sync_github_api.py 通过 GitHub 官方 Git 数据 API 同步单次新提交；上传前仍须检查提交内容。
 
-scripts/deploy_render.py 从被忽略的 .env.deploy.local 读取 RENDER_API_KEY，从 backend/.env.local 读取模型配置；只创建独立的 Free 后端和 Static Site。线上作品集默认开启公开演示，不向前端提供模型密钥或 Render 密钥。
+scripts/deploy_render.py 从被忽略的 .env.deploy.local 读取 RENDER_API_KEY，从 backend/.env.local 读取模型配置；只创建独立的 Free 后端和 Static Site。公开在线版本默认开启公开演示，不向前端提供模型密钥或 Render 密钥。
 
 服务 ID 与地址保存在 .runtime/render-services.json。服务已设置 autoDeploy=yes；若以公开仓库 URL 连接而未授予 GitHub App 权限，推送后应检查是否触发构建，必要时在 Render 选择 Deploy latest commit。环境变量变更后需要重新部署后端。
 

@@ -25,16 +25,16 @@
   ·
   <a href="docs/architecture.md">Agent Architecture</a>
   ·
-  <a href="docs/portfolio-guide.md">Interview Guide</a>
+  <a href="docs/project-guide.md">Project Guide</a>
 </p>
 
 </div>
 
-> **Quick review path:** Open the [live workspace](https://epochflow-web.onrender.com/) and enter “I cannot log in, and I also need a refund.” Inspect intent detection, primary/support Agent routing, and tool execution. Then explore Model Studio or Knowledge Space. A sleeping Render free instance may take about one minute to wake up.
+> **Quick start:** Open the [live workspace](https://epochflow-web.onrender.com/) and enter “I cannot log in, and I also need a refund.” Inspect intent detection, primary/support Agent routing, and tool execution. Then explore Model Studio or Knowledge Space. A sleeping Render free instance may take about one minute to wake up.
 
 ## Why EpochFlow
 
-EpochFlow is a personal Agent engineering project designed and implemented by [ASEpochs](https://github.com/ASEpochs). It turns a model request into an inspectable workflow: **intent recognition → Agent routing → Skill injection → tool execution → knowledge retrieval → response composition → evaluation**.
+EpochFlow is an Agent engineering platform for customer support and knowledge-service scenarios. It turns a model request into an inspectable workflow: **intent recognition → Agent routing → Skill injection → tool execution → knowledge retrieval → response composition → evaluation**.
 
 The goal is to make an Agent system explainable as software: roles have explicit boundaries, execution can be traced, model providers can be switched, and quality can be checked repeatedly. The repository includes a Vue workspace, FastAPI service, multi-agent orchestrator, lightweight knowledge layer, model gateway, evaluation suite, automated tests, and cloud deployment.
 
@@ -142,9 +142,9 @@ flowchart LR
 
 The static Vue frontend and FastAPI backend run as separate Render services. Provider credentials remain on the backend. See [Architecture and runtime conventions](docs/architecture.md) for implementation boundaries.
 
-## My contribution
+## Design and implementation scope
 
-This is an end-to-end personal project by ASEpochs:
+EpochFlow covers the following end-to-end engineering areas:
 
 - **Product:** project positioning, information architecture, demo routes, and public-use boundaries;
 - **Agent architecture:** intent recognition, primary/support routing, role contracts, Skills, and tool loop;
@@ -232,7 +232,7 @@ See [`render.yaml`](render.yaml) and the [free Render deployment guide](docs/ren
 
 - [Documentation index](docs/README.md)
 - [Architecture and runtime conventions](docs/architecture.md)
-- [Interview and portfolio guide](docs/portfolio-guide.md)
+- [Project guide and design notes](docs/project-guide.md)
 - [Model Studio](docs/model-studio.md)
 - [Free Render deployment](docs/render-free.md)
 

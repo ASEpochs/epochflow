@@ -296,7 +296,7 @@ general = 低
 - 使用 LLM-as-Judge 评价回复质量
 - 输出回归风险和优化建议
 
-## 12. 简历与面试表达
+## 12. 项目说明与技术交流表达
 
 ### 项目标题
 
@@ -320,7 +320,7 @@ NexusOps: Multi-Agent Customer Support Harness
 设计并实现 NexusOps 企业智能运营协同中枢，支持细粒度意图识别、RAG 知识库、Redis + ChromaDB 分层记忆、结构化多 Agent 路由、动态 Skills 注入、工具熔断降级和 LLM-as-Judge 评测闭环。
 ```
 
-### 简历 bullet 示例
+### 项目说明 bullet 示例
 
 - 设计多 Agent 编排链路，将用户请求解析为细粒度意图、意图组、结构化实体和路由置信度，并生成 `primary_agent + supporting_agents` 的可解释路由决策。
 - 构建按意图触发的 RAG 检索链路，结合 ChromaDB 知识库、查询改写、多子查询召回和 LLM 重排，降低无关知识注入对回复质量的干扰。
@@ -329,7 +329,7 @@ NexusOps: Multi-Agent Customer Support Harness
 - 建设工具可靠性治理能力，为知识库检索等工具调用增加参数校验、TTL 缓存、超时控制、熔断和 fallback 降级。
 - 搭建 Monitor 与 LLM-as-Judge 评测闭环，统计 Agent 成功率、延迟、意图识别准确率、Macro-F1 和端到端回复质量，并支持回归检测。
 
-### 面试介绍模板
+### 项目介绍模板
 
 ```text
 这个项目最开始可以理解成客服 Agent，但我没有停留在单轮问答，而是把它做成了一个小型 Multi-Agent Runtime。
