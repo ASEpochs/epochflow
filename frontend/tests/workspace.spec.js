@@ -119,3 +119,16 @@ test('video task can resume after page reload without submitting again', async (
   expect(queried).toBeGreaterThan(0)
   await expect(page.getByRole('button', { name: '已有视频任务待完成' })).toBeDisabled()
 })
+
+test('public demo settings do not ask visitors for an access code', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.route('**/api/python/health', route => route.fulfill({ json: {
+    status: 'ok', model_configured: true, public_demo: true, model: 'deepseek-ai/DeepSeek-V3.2',
+    storage_mode: 'memory', persistent: false, retrieval: 'character_ngram', agents: {},
+  } }))
+  await page.goto('/')
+  await page.getByRole('button', { name: '工作台设置', exact: true }).click()
+  await expect(page.getByText('公开演示已开启')).toBeVisible()
+  await expect(page.getByLabel('工作台访问码')).toHaveCount(0)
+  await expect(page.getByText('公开演示 · 无访问码')).toBeVisible()
+})

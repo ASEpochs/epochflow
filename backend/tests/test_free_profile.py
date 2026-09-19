@@ -98,6 +98,11 @@ def test_boot_without_key_or_database_and_production_access_guard(monkeypatch):
         headers = {'X-Access-Token': 'test-only-token'}
         assert client.get('/knowledge/stats', headers=headers).status_code == 200
         assert client.get('/health').status_code == 200
+        monkeypatch.setenv('PUBLIC_DEMO', 'true')
+        assert client.get('/knowledge/stats').status_code == 200
+        public_health = client.get('/health').json()
+        assert public_health['public_demo'] is True
+        monkeypatch.setenv('PUBLIC_DEMO', 'false')
         created = client.post('/knowledge/add', headers=headers, json={'documents': [
             {'title': '工作台回归测试资料', 'content': '木星轨道测试专用内容'}]})
         assert created.status_code == 200

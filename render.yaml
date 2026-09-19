@@ -17,7 +17,9 @@ services:
       - key: PROMETHEUS_PORT
         value: "0"
       - key: APP_ACCESS_TOKEN
-        generateValue: true
+        sync: false
+      - key: PUBLIC_DEMO
+        value: "true"
       - key: FRONTEND_ORIGINS
         sync: false
       - key: ANTHROPIC_MODEL

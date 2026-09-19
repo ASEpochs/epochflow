@@ -17,6 +17,10 @@ def model_configured():
     return os.getenv('ANTHROPIC_API_KEY', '').strip() not in {'', 'your_api_key', 'changeme'}
 
 
+def public_demo_enabled():
+    return os.getenv('PUBLIC_DEMO', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
 class RequestBoundary:
     """Bound request bodies before multipart parsing, including chunked uploads."""
     MAX_BODY = 1200 * 1024
@@ -35,7 +39,7 @@ class RequestBoundary:
         async def reject(status, message):
             await JSONResponse({'detail': message, 'request_id': request_id}, status_code=status,
                                headers={'X-Request-ID': request_id})(scope, receive, send)
-        if method != 'OPTIONS' and path != '/health':
+        if method != 'OPTIONS' and path != '/health' and not public_demo_enabled():
             token = os.getenv('APP_ACCESS_TOKEN', '').strip()
             if os.getenv('APP_ENV') == 'production' and not token:
                 return await reject(503, '请在 Render 设置 APP_ACCESS_TOKEN 后访问工作台')

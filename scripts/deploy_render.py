@@ -43,7 +43,7 @@ def main():
         base = {'ownerId': owner_id, 'repo': REPO, 'branch': 'main', 'autoDeploy': 'yes'}
         if 'backend' not in state:
             env = {'PYTHON_VERSION': '3.12.8', 'APP_ENV': 'production', 'STORAGE_MODE': 'memory',
-                   'APP_ACCESS_TOKEN': access, 'PROMETHEUS_PORT': '0', 'FRONTEND_ORIGINS': 'https://epochflow-web.onrender.com',
+                   'PUBLIC_DEMO': 'true', 'PROMETHEUS_PORT': '0', 'FRONTEND_ORIGINS': 'https://epochflow-web.onrender.com',
                    **{key: model[key] for key in ('ANTHROPIC_API_KEY', 'ANTHROPIC_BASE_URL', 'ANTHROPIC_MODEL') if model.get(key)}}
             payload = {**base, 'type': 'web_service', 'name': 'epochflow-api', 'rootDir': 'backend',
                        'envVars': [{'key': key, 'value': value} for key, value in env.items()],

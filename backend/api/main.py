@@ -45,7 +45,7 @@ _monitor      = None
 _evaluator    = None
 _skill_manager = None
 
-from api.security import RequestBoundary, model_configured
+from api.security import RequestBoundary, model_configured, public_demo_enabled
 from api.workspace import router as workspace_router
 from api.models import router as models_router
 from core.model_scope import agent_model_scope, model_errors
@@ -235,6 +235,7 @@ async def health():
     if _orchestrator is None:
         raise HTTPException(503, "服务未就绪")
     return {"status": "ok", "model_configured": model_configured(),
+            "public_demo": public_demo_enabled(),
             "storage_mode": os.getenv("STORAGE_MODE", "memory"),
             "persistent": os.getenv("STORAGE_MODE", "memory") != "memory",
             "retrieval": "character_ngram" if os.getenv("STORAGE_MODE", "memory") == "memory" else "chroma",
@@ -595,5 +596,4 @@ async def run_eval(body: Optional[EvalRunInput] = None):
             for r in report.results
         ],
     }
-
 
