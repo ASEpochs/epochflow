@@ -4,6 +4,8 @@
 
 ### 可观测、可评测、可部署的多 Agent 运行与模型实验平台
 
+**理解请求 · 编排能力 · 执行工具 · 观察过程 · 评测结果**
+
 <p>
   <a href="https://epochflow-web.onrender.com/"><strong>🚀 点击这里，立即体验在线系统 →</strong></a>
 </p>
@@ -16,6 +18,16 @@
 [![Vue](https://img.shields.io/badge/Vue-3-3f8f6b?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 [![Render](https://img.shields.io/badge/Render-Deployed-6b5fd3?style=flat-square&logo=render&logoColor=white)](https://render.com/)
 
+<p>
+  <a href="README_EN.md">English</a>
+  ·
+  <a href="docs/README.md">文档中心</a>
+  ·
+  <a href="docs/architecture.md">Agent 架构</a>
+  ·
+  <a href="docs/portfolio-guide.md">面试讲解</a>
+</p>
+
 </div>
 
 > **给面试官 / 导师的快速体验建议：** 打开[在线工作台](https://epochflow-web.onrender.com/)，在“对话实验室”输入“登录失败，而且订单需要退款”，观察意图识别、主辅 Agent 路由和工具执行；随后进入“模型中心”或“知识空间”体验多模型与检索能力。Render 免费实例首次唤醒可能需要约一分钟。
@@ -27,6 +39,17 @@ EpochFlow 是我设计并实现的个人 Agent 工程项目。它面向客服与
 我希望解决的问题不是“让大模型多回答一句话”，而是让 Agent 系统具备清晰的角色边界、可追踪的执行过程、可替换的模型能力和可重复的质量验证。项目包含 Vue 工作台、FastAPI 后端、多 Agent 编排器、轻量知识库、模型网关、评测模块、自动化测试与 Render 云端部署。
 
 ![EpochFlow 对话实验室](docs/assets/workspace-desktop.png)
+
+## 能力地图
+
+| | 能力 | 解决的问题 |
+| --- | --- | --- |
+| 🧭 | **Intent & Routing** | 从混合诉求中提取意图和实体，选择主 Agent 与辅助 Agent |
+| 🤖 | **Multi-Agent** | 隔离角色提示词、输出契约、模型参数与工具权限 |
+| 🧩 | **Skills & Tools** | 按角色和关键词注入规则，并在白名单内执行工具 |
+| 📚 | **Knowledge** | 导入、切片、检索并把相关上下文回注到本轮对话 |
+| 🔬 | **Model Studio** | 在统一界面实验文字、视觉、生成、向量和重排模型 |
+| 📈 | **Observe & Evaluate** | 记录路由与工具链路，通过用例和 LLM-as-Judge 检查质量 |
 
 ## 一眼看懂项目
 
@@ -86,6 +109,21 @@ EpochFlow 是我设计并实现的个人 Agent 工程项目。它面向客服与
 - 模型失败、超时或返回异常时显式报错，不伪造成功结果。
 - 后端统一限制请求体、响应体、频率与并发，并为响应附加 request_id。
 - Markdown 输出经过 DOMPurify 清理，供应商密钥始终保留在服务端。
+
+## Agent 工作闭环
+
+![EpochFlow Agent 执行闭环](docs/assets/agent-loop.svg)
+
+| Agent 阶段 | 当前实现 |
+| --- | --- |
+| 理解 Understand | 结合规则、模板与模型信号，输出细粒度意图、实体和置信度 |
+| 路由 Route | 根据意图与运行状态选择主 Agent，并为复合诉求分配辅助 Agent |
+| 装配 Equip | 读取临时会话记忆，按需注入 Skills、知识片段和工具定义 |
+| 执行 Act | 在角色白名单内校验参数、调用工具，并把结果送回模型继续推理 |
+| 合成 Compose | 汇总多个 Agent 与工具结果，生成一致、可读的最终回复 |
+| 观察与评测 Observe | 返回 request_id、路由原因、工具日志和延迟，并支持自动化质量评测 |
+
+这套闭环让系统的重点从“模型说了什么”扩展到“系统为什么这样路由、调用了什么、结果如何验证”。
 
 ## 系统架构
 
@@ -242,6 +280,8 @@ npm run test:e2e
 
 ## 文档
 
+- [English README](README_EN.md)
+- [文档中心](docs/README.md)
 - [面试展示与项目讲解](docs/portfolio-guide.md)
 - [架构与运行约定](docs/architecture.md)
 - [模型接入说明](docs/model-studio.md)
