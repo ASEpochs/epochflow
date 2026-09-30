@@ -1,0 +1,112 @@
+name: Automated repository maintenance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/maintenance.yml
+  schedule:
+    # 10:17 in China Standard Time. The non-round minute helps reduce
+    # delays caused by GitHub Actions load at the top of the hour.
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repository-maintenance
+  cancel-in-progress: false
+
+jobs:
+  check-due:
+    runs-on: ubuntu-latest
+    outputs:
+      due: ${{ steps.age.outputs.due }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - id: age
+        name: Check whether maintenance is due
+        shell: bash
+        run: |
+          latest_commit_epoch="$(git log -1 --format=%ct)"
+          current_epoch="$(date -u +%s)"
+          age_seconds="$((current_epoch - latest_commit_epoch))"
+
+          if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "workflow_dispatch" || "$age_seconds" -ge 129600 ]]; then
+            echo "due=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "due=false" >> "$GITHUB_OUTPUT"
+            echo "The latest repository update is less than 36 hours old; nothing to do."
+          fi
+
+  backend:
+    needs: check-due
+    if: needs.check-due.outputs.due == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-free.txt pytest==8.3.4
+      - run: python -m pytest -q tests/test_free_profile.py tests/test_agent_orchestrator.py tests/test_llm_utils.py tests/test_model_studio.py
+
+  frontend:
+    needs: check-due
+    if: needs.check-due.outputs.due == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  record:
+    needs: [check-due, backend, frontend]
+    if: >-
+      needs.check-due.outputs.due == 'true' &&
+      needs.backend.result == 'success' &&
+      needs.frontend.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record successful maintenance check
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          git fetch origin "$DEFAULT_BRANCH"
+          git checkout -B "$DEFAULT_BRANCH" "origin/$DEFAULT_BRANCH"
+
+          latest_commit_epoch="$(git log -1 --format=%ct)"
+          current_epoch="$(date -u +%s)"
+          age_seconds="$((current_epoch - latest_commit_epoch))"
+          if [[ "$EVENT_NAME" != "push" && "$EVENT_NAME" != "workflow_dispatch" && "$age_seconds" -lt 129600 ]]; then
+            echo "A newer commit arrived while checks were running; skipping the maintenance commit."
+            exit 0
+          fi
+
+          checked_at="$(date -u '+%Y-%m-%d %H:%M UTC')"
+          echo "| $checked_at | Passed | Passed | Scheduled CI maintenance |" >> .github/maintenance-log.md
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/maintenance-log.md
+          git commit -m "chore: record automated maintenance check"
+          git push origin "HEAD:$DEFAULT_BRANCH"
