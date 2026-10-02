@@ -43,14 +43,19 @@ export function useWorkspace() {
     const conversation = active.value || createConversation()
     if (!retry) conversation.messages.push({ id: crypto.randomUUID(), role: 'user', content: text.trim() })
     if (conversation.messages.filter(item => item.role === 'user').length === 1) conversation.title = text.trim().slice(0, 24)
-    conversation.messages.push({ id: crypto.randomUUID(), role: 'assistant', content: '', pending: true, prompt: text })
+    conversation.messages.push({ id: crypto.randomUUID(), role: 'assistant', content: '', pending: true, prompt: text, startedAt: Date.now() })
     const message = conversation.messages[conversation.messages.length - 1]
     busy.value = true
     try {
       const response = await api('/chat', { method: 'POST', body: { message: text, user_id: userId, conv_id: conversation.serverId || undefined, model: selectedModel.value || undefined } })
       conversation.serverId = response.conv_id; message.content = response.response; message.result = response
-      try { message.trace = (await api(`/trace/tool/${encodeURIComponent(response.request_id)}`)).trace } catch { message.traceError = true }
-      await refresh()
+      // The answer is ready now. Trace and dashboard refreshes are secondary
+      // requests and must not keep the reply hidden behind the loading state.
+      message.pending = false; busy.value = false
+      const loadTrace = api(`/trace/tool/${encodeURIComponent(response.request_id)}`)
+        .then(result => { message.trace = result.trace })
+        .catch(() => { message.traceError = true })
+      void Promise.allSettled([loadTrace, refresh()])
     } catch (error) { message.error = error.message }
     finally { message.pending = false; busy.value = false }
   }

@@ -235,7 +235,7 @@ python 启动开发.py
 ```dotenv
 ANTHROPIC_API_KEY=your_api_key
 ANTHROPIC_BASE_URL=https://api.siliconflow.cn
-ANTHROPIC_MODEL=deepseek-ai/DeepSeek-V3.2
+ANTHROPIC_MODEL=Qwen/Qwen3-30B-A3B-Instruct-2507
 ```
 
 随后访问 `http://127.0.0.1:5174`。开发后端使用 `8003` 端口；终端内按 `Ctrl+C` 会停止本次启动的前后端进程。

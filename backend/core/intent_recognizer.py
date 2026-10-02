@@ -13,6 +13,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import os
 import re
 import time
 from dataclasses import dataclass, field
@@ -187,10 +188,41 @@ class IntentRecognizer:
 
         t0 = time.monotonic()
 
+        # Common support requests already contain an unambiguous domain signal
+        # (for example, refund, invoice, logistics, 401 or crash). Routing those
+        # locally removes a full provider round-trip before the answer is
+        # generated. Ambiguous requests still use the three-source classifier.
+        pat = self._pattern_recognize(message)
+        fast_intent = pat.get("intent", IntentCategory.OTHER)
+        fast_confidence = float(pat.get("confidence", 0.0) or 0.0)
+        fast_enabled = os.getenv("ECHOMIND_FAST_INTENT", "true").strip().lower() not in {
+            "0", "false", "no", "off",
+        }
+        if fast_enabled and fast_intent in _SPECIFIC_INTENTS and fast_confidence >= 0.5:
+            result = IntentResult(
+                intent=fast_intent,
+                confidence=fast_confidence,
+                urgency=self._urgency(message, fast_intent),
+                intent_group=self._intent_group(fast_intent),
+                entities=self._extract_entities(message),
+                reasoning="明确业务关键词命中，使用本地快速路由",
+                latency_ms=(time.monotonic() - t0) * 1000,
+                source_scores={
+                    "llm": 0.0,
+                    "embedding": 0.0,
+                    "pattern": fast_confidence,
+                    "fast_path": 1.0,
+                },
+            )
+            if len(self._cache) >= 1000:
+                for old_key in list(self._cache)[:500]:
+                    del self._cache[old_key]
+            self._cache[key] = result
+            return result
+
         # LLM 和 Embedding 并行（Embedding 不可用时跳过）
         llm_task = asyncio.create_task(self._llm_recognize(message, history))
         emb_task = asyncio.create_task(self._embedding_recognize(message)) if self._embedding_enabled else None
-        pat      = self._pattern_recognize(message)
 
         if emb_task:
             llm, emb = await asyncio.gather(llm_task, emb_task)

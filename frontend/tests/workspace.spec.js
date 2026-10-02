@@ -50,6 +50,25 @@ test('chat UI renders structured results and sanitizes model markdown', async ({
   await expect(page.getByRole('heading', { name: '一个问题， 开启一次探索。' })).toBeVisible()
 })
 
+test('chat shows staged inference feedback and reveals the answer before trace refresh finishes', async ({ page }) => {
+  await page.route('**/chat', async route => {
+    await new Promise(resolve => setTimeout(resolve, 350))
+    await route.fulfill({ json: {
+      conv_id: 'speed-session', request_id: 'slow-trace', response: '回答已经生成。', model: 'fast-model',
+      intent: 'query', primary_agent: 'general', agent_types: ['general'], tools_used: [], latency_ms: 350,
+    } })
+  })
+  await page.route('**/trace/tool/slow-trace', async route => {
+    await new Promise(resolve => setTimeout(resolve, 2500))
+    await route.fulfill({ json: { trace: { tool_calls: [] } } })
+  })
+  await page.goto('/')
+  await page.getByLabel('输入你的问题').fill('测试响应状态')
+  await page.getByRole('button', { name: '发送消息' }).click()
+  await expect(page.locator('.thinking[role="status"]')).toContainText('请求已发送，正在连接模型')
+  await expect(page.getByText('回答已经生成。')).toBeVisible({ timeout: 1500 })
+})
+
 test('mobile workspace has no horizontal overflow and menu works', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')

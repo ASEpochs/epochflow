@@ -23,7 +23,7 @@ services:
       - key: FRONTEND_ORIGINS
         sync: false
       - key: ANTHROPIC_MODEL
-        value: deepseek-ai/DeepSeek-V3.2
+        value: Qwen/Qwen3-30B-A3B-Instruct-2507
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: ANTHROPIC_BASE_URL

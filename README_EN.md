@@ -187,7 +187,7 @@ Set the model provider in `backend/.env.local`:
 ```dotenv
 ANTHROPIC_API_KEY=your_api_key
 ANTHROPIC_BASE_URL=https://api.siliconflow.cn
-ANTHROPIC_MODEL=deepseek-ai/DeepSeek-V3.2
+ANTHROPIC_MODEL=Qwen/Qwen3-30B-A3B-Instruct-2507
 ```
 
 Open `http://127.0.0.1:5174`. The development API uses port `8003`; press `Ctrl+C` in the launcher terminal to stop both processes.

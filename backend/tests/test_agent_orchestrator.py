@@ -14,7 +14,7 @@ from agents.agent_orchestrator import (
     TechnicalAgent,
     build_shared_rag_tools,
 )
-from core.intent_recognizer import IntentCategory, UrgencyLevel
+from core.intent_recognizer import IntentCategory, IntentRecognizer, UrgencyLevel
 
 
 class FakeClient:
@@ -56,6 +56,27 @@ def test_agent_profiles_have_distinct_contracts_and_generation_config():
     assert "search_knowledge_base" in GeneralAgent.profile.tool_scope
     assert "lookup_error_code" in TechnicalAgent.profile.tool_scope
     assert "check_billing_fields" in BillingAgent.profile.tool_scope
+
+
+def test_specific_intent_uses_local_fast_path_without_model_round_trip():
+    async def exercise():
+        recognizer = IntentRecognizer(api_key="test-key")
+
+        async def model_must_not_run(*args, **kwargs):
+            raise AssertionError("specific intent should not call the model classifier")
+
+        recognizer._llm_recognize = model_must_not_run
+        recognizer._embedding_recognize = model_must_not_run
+        try:
+            result = await recognizer.recognize("登录失败，出现 401 错误")
+        finally:
+            await recognizer.client.close()
+
+        assert result.intent is IntentCategory.TECHNICAL_LOGIN
+        assert result.intent_group == "technical"
+        assert result.source_scores["fast_path"] == 1.0
+
+    asyncio.run(exercise())
 
 
 def test_domain_agents_build_different_role_packets():

@@ -1,11 +1,11 @@
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { ArrowUp, ArrowUpRight, Sparkles, Copy, RotateCcw, Download, Trash2, ChevronRight, ShoppingBag, Wrench, ReceiptText, Bot, LoaderCircle, PanelRightClose, PanelRightOpen } from 'lucide-vue-next'
 import MessageContent from '../components/MessageContent.vue'
 import ExecutionPanel from '../components/ExecutionPanel.vue'
 const props = defineProps({ workspace: Object })
 const { active, busy, send, notify, exportConversation, deleteConversation, health, selectedModel, agentModels } = props.workspace
-const draft = ref(''), messageList = ref(null), showTrace = ref(window.innerWidth > 980), selectedMessage = ref(null)
+const draft = ref(''), messageList = ref(null), showTrace = ref(window.innerWidth > 980), selectedMessage = ref(null), now = ref(Date.now())
 const latest = computed(() => selectedMessage.value || [...(active.value?.messages || [])].reverse().find(item => item.role === 'assistant'))
 const examples = [
   { icon: ReceiptText, label: '退款与账单', text: '购买三天后想退款，应该如何申请？', tag: 'BILLING AGENT', tint: 'mint' },
@@ -14,6 +14,17 @@ const examples = [
 ]
 async function submit() { if (!draft.value.trim() || busy.value) return; const text = draft.value; draft.value = ''; selectedMessage.value = null; await send(text) }
 async function copy(text) { try { await navigator.clipboard.writeText(text); notify('回复已复制') } catch { notify('浏览器无法访问剪贴板，请手动选择复制') } }
+function elapsed(message) { return Math.max(0, Math.floor((now.value - (message.startedAt || now.value)) / 1000)) }
+function pendingCopy(message) {
+  const seconds = elapsed(message)
+  if (seconds < 5) return { title: '请求已发送，正在连接模型', detail: '免费服务首次访问时可能需要短暂唤醒。' }
+  if (seconds < 15) return { title: '正在识别意图并选择 Agent', detail: 'EpochFlow 正在分析问题并安排合适的处理流程。' }
+  if (seconds < 30) return { title: '模型正在推理并组织回复', detail: '请保持当前页面，完成后会自动显示结果。' }
+  return { title: '模型仍在推理，请再稍候', detail: '复杂问题可能需要更长时间，请勿重复提交。' }
+}
+let clock
+onMounted(() => { clock = window.setInterval(() => { now.value = Date.now() }, 1000) })
+onUnmounted(() => window.clearInterval(clock))
 watch(() => active.value?.id, () => { selectedMessage.value = null })
 watch(() => active.value?.messages.map(item => [item.pending, item.content, item.error]), async () => { await nextTick(); messageList.value?.scrollTo({ top: messageList.value.scrollHeight, behavior: 'smooth' }) }, { deep: true })
 </script>
@@ -21,7 +32,7 @@ watch(() => active.value?.messages.map(item => [item.pending, item.content, item
   <div class="chat-page"><div class="page-heading"><div><div class="eyebrow">CONVERSATION LAB</div><h1>对话实验室<span class="heading-dot">.</span></h1><p>从一个真实问题开始，观察多 Agent 如何协作。</p></div><div class="heading-actions"><button class="quiet" :disabled="!active?.messages?.length" @click="exportConversation"><Download :size="16" /> 导出</button><button class="icon-button" title="移除当前会话" aria-label="移除当前会话" :disabled="busy" @click="deleteConversation"><Trash2 :size="17" /></button><button class="icon-button" title="切换执行观察" aria-label="切换执行观察" @click="showTrace = !showTrace"><PanelRightClose v-if="showTrace" :size="18" /><PanelRightOpen v-else :size="18" /></button></div></div>
     <div class="chat-grid" :class="{ 'without-trace': !showTrace }"><section class="conversation-panel"><div class="conversation-top"><span class="conversation-title"><span class="tiny-dot"></span>{{ active?.title || '新的 Agent 实验' }}</span><span class="small muted">{{ active?.messages?.filter(item => item.role === 'user').length || 0 }} 次交互</span></div>
       <div class="messages" ref="messageList" aria-live="polite"><div v-if="!active?.messages?.length" class="welcome"><div class="welcome-emblem"><Sparkles :size="27" :stroke-width="1.5" /></div><span class="eyebrow">YOUR NEXT EXPERIMENT STARTS HERE</span><h2>一个问题，<br>开启一次探索。</h2><p>把问题交给 Agent，<br class="mobile-only">把过程留给你观察。</p><div class="example-grid"><button v-for="example in examples" :key="example.label" class="example-card" @click="draft = example.text"><span :class="['example-icon', example.tint]"><component :is="example.icon" :size="19" /></span><strong>{{ example.label }}<ArrowUpRight :size="15" /></strong><p>{{ example.text }}</p><small>{{ example.tag }}</small></button></div><div class="welcome-caption"><span></span> 基于真实模型调用与结构化执行记录 <span></span></div></div>
-      <article v-for="message in active?.messages || []" :key="message.id" :class="['message', message.role]"><div class="message-avatar"><Bot v-if="message.role === 'assistant'" :size="18" /><span v-else>A</span></div><div class="message-main"><div class="message-author">{{ message.role === 'user' ? '你' : 'EpochFlow' }}<span>{{ message.role === 'user' ? '提问' : 'Agent' }}</span></div><div v-if="message.pending" class="thinking"><LoaderCircle :size="16" class="spin" /> 正在识别意图并执行，请稍候…</div><div v-else-if="message.error" class="error-box"><p>{{ message.error }}</p><button class="quiet" :disabled="busy" @click="send(message.prompt, true)"><RotateCcw :size="14" /> 重试请求</button></div><MessageContent v-else :content="message.content" /><div v-if="message.result" class="message-actions"><button class="quiet" @click="copy(message.content)"><Copy :size="13" /> 复制</button><button class="quiet" @click="selectedMessage = message; showTrace = true">{{ message.result.primary_agent }} <ChevronRight :size="13" /> 查看执行</button><span :title="message.result.model">{{ message.result.model?.split('/').at(-1) }} · {{ (message.result.latency_ms / 1000).toFixed(1) }}s</span></div></div></article></div>
+      <article v-for="message in active?.messages || []" :key="message.id" :class="['message', message.role]"><div class="message-avatar"><Bot v-if="message.role === 'assistant'" :size="18" /><span v-else>A</span></div><div class="message-main"><div class="message-author">{{ message.role === 'user' ? '你' : 'EpochFlow' }}<span>{{ message.role === 'user' ? '提问' : 'Agent' }}</span></div><div v-if="message.pending" class="thinking" role="status"><div class="thinking-heading"><LoaderCircle :size="17" class="spin" /><strong>{{ pendingCopy(message).title }}</strong><span>{{ elapsed(message) }} 秒</span></div><p>{{ pendingCopy(message).detail }}</p><div class="thinking-progress" aria-hidden="true"><i></i></div></div><div v-else-if="message.error" class="error-box"><p>{{ message.error }}</p><button class="quiet" :disabled="busy" @click="send(message.prompt, true)"><RotateCcw :size="14" /> 重试请求</button></div><MessageContent v-else :content="message.content" /><div v-if="message.result" class="message-actions"><button class="quiet" @click="copy(message.content)"><Copy :size="13" /> 复制</button><button class="quiet" @click="selectedMessage = message; showTrace = true">{{ message.result.primary_agent }} <ChevronRight :size="13" /> 查看执行</button><span :title="message.result.model">{{ message.result.model?.split('/').at(-1) }} · {{ (message.result.latency_ms / 1000).toFixed(1) }}s</span></div></div></article></div>
       <form class="composer" @submit.prevent="submit"><label class="sr-only" for="chat-input">输入你的问题</label><textarea id="chat-input" v-model="draft" placeholder="提出一个问题，看看 Agent 如何解决…" rows="2" maxlength="8000" @keydown.ctrl.enter.prevent="submit" @keydown.meta.enter.prevent="submit"></textarea><div class="composer-bottom"><label class="composer-model model-select"><span class="sr-only">Agent 模型</span><select v-model="selectedModel" :disabled="busy" aria-label="Agent 模型"><option value="">默认 · {{ health?.model?.split('/').at(-1) || '后端模型' }}</option><option v-for="model in agentModels" :key="model.id" :value="model.id">{{ model.name }}</option></select></label><div><span class="shortcut">Ctrl / ⌘ + Enter</span><button class="send-button" type="submit" :disabled="busy || !draft.trim()" aria-label="发送消息"><LoaderCircle v-if="busy" :size="18" class="spin" /><ArrowUp v-else :size="20" /></button></div></div></form><p class="composer-note">AI 回复可能不准确，请核实重要信息。显示记录仅保留在当前浏览器会话中。</p>
     </section><ExecutionPanel v-if="showTrace" :message="latest" /></div>
   </div>
